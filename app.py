@@ -622,16 +622,15 @@ def main():
                 with st.expander("View Detailed Prediction Data"):
                     st.dataframe(pred_df)
 
-
                 st.subheader("🧠 Model Accuracy Visualization")
                 
-                # Create train-test split for visualization
+                # Prepare data for accuracy visualization
                 X = df[['hour_sin', 'hour_cos', 'day_of_week', 'day_of_year', 'month',
                        'Temperature (°C)', 'Humidity (%)', 'Pressure (hPa)',
                        'wind_speed_lag1', 'wind_speed_lag2', 'wind_speed_lag3']].dropna()
                 y = df['Wind Speed (m/s)'].iloc[X.index]
                 
-                # Make predictions on test set
+                # Make predictions on the same data
                 y_pred = model.predict(X)
                 
                 # Create accuracy visualization
@@ -676,6 +675,7 @@ def main():
                             text=f'R² = {test_accuracy:.2f}',
                             showarrow=False,
                             font=dict(size=20)
+                        )
                     ]
                 )
                 
