@@ -1365,21 +1365,6 @@ def main():
 
                 # Explanation section
                 with st.expander("📚 About Wind Speed Prediction Model", expanded=True):
-                    st.markdown("""
-                    ### Prediction Validation Methodology
-                    
-                    **Validation Approach**:
-                    1. Use historical data as ground truth
-                    2. Train on 80% of data, test on 20%
-                    3. Compare predictions with actual observations
-                    4. Calculate error metrics
-                    
-                    **Key Metrics**:
-                    - MAE (Mean Absolute Error): Average absolute difference
-                    - RMSE (Root Mean Squared Error): Emphasizes larger errors
-                    - R² Score: Proportion of variance explained
-                    """)
-
                 # Get historical data for validation (past 5 days)
                 historical_data = get_weather_data(lat, lon, days=5)
                 hist_df = pd.DataFrame({
