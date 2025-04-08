@@ -1363,14 +1363,6 @@ def main():
                     st.dataframe(pred_df)
 
 
-
-
-
-
-
-            with tab4:
-                st.subheader("🔮 Advanced Wind Speed Prediction & Validation")
-
                 # Explanation section
                 with st.expander("📚 About Wind Speed Prediction Model", expanded=True):
                     st.markdown("""
