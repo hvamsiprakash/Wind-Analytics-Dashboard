@@ -1,46 +1,3 @@
-Hugging Face's logo
-Hugging Face
-Models
-Datasets
-Spaces
-Posts
-Docs
-Enterprise
-Pricing
-
-
-
-Spaces:
-
-prakashvamsi
-/
-f1
-
-
-like
-0
-
-Logs
-App
-Files
-Community
-Settings
-f1
-prakashvamsi's picture
-prakashvamsi
-Update app.py
-51c8fa7
-verified
-5 minutes ago
-raw
-
-Copy download link
-history
-blame
-edit
-delete
-
-33.8 kB
 import streamlit as st
 import requests
 import pandas as pd
@@ -769,7 +726,6 @@ def main():
                     
 if __name__ == "__main__":
     main()
-
 
 
 
