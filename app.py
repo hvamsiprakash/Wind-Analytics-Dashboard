@@ -1362,128 +1362,121 @@ def main():
                 with st.expander("View Detailed Prediction Data"):
                     st.dataframe(pred_df)
 
-                # NEW: Additional Visualizations Section
-                st.subheader("🌬️ Advanced Wind Prediction Visualizations")
-                
-                # Row 1: Prediction Error Analysis and Feature Importance
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    # Prediction Error Analysis
-                    st.markdown("#### Prediction Error Distribution")
-                    y_test = model.predict(X_test)
-                    errors = y_test - y_test
-                    fig = px.histogram(x=errors, nbins=30, 
-                                    title="Model Error Distribution - Shows prediction accuracy",
-                                    labels={'x': 'Prediction Error (m/s)'},
-                                    template="plotly_dark")
-                    fig.add_vline(x=0, line_dash="dash", line_color="white")
-                    st.plotly_chart(fig, use_container_width=True)
-                
-                with col2:
-                    # Feature Importance
-                    st.markdown("#### Feature Importance")
-                    importance = pd.DataFrame({
-                        'Feature': features,
-                        'Importance': model.feature_importances_
-                    }).sort_values('Importance', ascending=True)
+
+
+
+
+
+
+            with tab4:
+                st.subheader("🔮 Advanced Wind Speed Prediction & Validation")
+
+                # Explanation section
+                with st.expander("📚 About Wind Speed Prediction Model", expanded=True):
+                    st.markdown("""
+                    ### Prediction Validation Methodology
                     
-                    fig = px.bar(importance, x='Importance', y='Feature', orientation='h',
-                                title="Feature Importance - Shows which factors most influence wind speed",
-                                template="plotly_dark")
-                    st.plotly_chart(fig, use_container_width=True)
-                
-                # Row 2: Wind Speed Decomposition and Prediction Intervals
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    # Wind Speed Decomposition
-                    st.markdown("#### Temporal Decomposition")
-                    df['Hour'] = df['Time'].dt.hour
-                    hourly_avg = df.groupby('Hour')['Wind Speed (m/s)'].mean().reset_index()
+                    **Validation Approach**:
+                    1. Use historical data as ground truth
+                    2. Train on 80% of data, test on 20%
+                    3. Compare predictions with actual observations
+                    4. Calculate error metrics
                     
-                    fig = px.line(hourly_avg, x='Hour', y='Wind Speed (m/s)',
-                                title="Diurnal Wind Pattern - Shows typical daily variation",
-                                template="plotly_dark")
-                    fig.update_xaxes(tickvals=list(range(0, 24, 3)))
-                    st.plotly_chart(fig, use_container_width=True)
+                    **Key Metrics**:
+                    - MAE (Mean Absolute Error): Average absolute difference
+                    - RMSE (Root Mean Squared Error): Emphasizes larger errors
+                    - R² Score: Proportion of variance explained
+                    """)
+
+                # Get historical data for validation (past 5 days)
+                historical_data = get_weather_data(lat, lon, days=5)
+                hist_df = pd.DataFrame({
+                    "Time": pd.to_datetime(historical_data['hourly']['time']),
+                    "Wind Speed (m/s)": historical_data['hourly']['wind_speed_10m'],
+                    "Wind Direction": historical_data['hourly']['wind_direction_10m'],
+                    "Temperature (°C)": historical_data['hourly']['temperature_2m'],
+                    "Humidity (%)": historical_data['hourly']['relative_humidity_2m'],
+                    "Pressure (hPa)": historical_data['hourly']['surface_pressure']
+                })
                 
-                with col2:
-                    # Prediction Intervals
-                    st.markdown("#### Prediction Confidence")
-                    pred_df['Hour'] = pred_df['Time'].dt.hour
-                    fig = px.scatter(pred_df, x='Hour', y='Predicted Wind Speed (m/s)',
-                                    error_y='Predicted Wind Speed (m/s)'*0.05,
-                                    title="Hourly Predictions with Confidence - Shows uncertainty by time of day",
-                                    template="plotly_dark")
-                    fig.update_xaxes(tickvals=list(range(0, 24, 3)))
-                    st.plotly_chart(fig, use_container_width=True)
+                # Prepare features for historical data
+                hist_df['hour'] = hist_df['Time'].dt.hour
+                hist_df['hour_sin'] = np.sin(2 * np.pi * hist_df['hour']/24)
+                hist_df['hour_cos'] = np.cos(2 * np.pi * hist_df['hour']/24)
+                hist_df['day_of_week'] = hist_df['Time'].dt.dayofweek
+                hist_df['day_of_year'] = hist_df['Time'].dt.dayofyear
+                hist_df['month'] = hist_df['Time'].dt.month
+                hist_df['wind_speed_lag1'] = hist_df['Wind Speed (m/s)'].shift(1)
+                hist_df['wind_speed_lag2'] = hist_df['Wind Speed (m/s)'].shift(2)
+                hist_df['wind_speed_lag3'] = hist_df['Wind Speed (m/s)'].shift(3)
+                hist_df = hist_df.dropna()
                 
-                # Row 3: 3D Wind Profile and Direction Prediction
-                st.markdown("#### 3D Wind Profile")
+                # Train-test split (use last 20% for validation)
+                test_size = int(len(hist_df) * 0.2)
+                train_df = hist_df.iloc[:-test_size]
+                test_df = hist_df.iloc[-test_size:]
                 
-                # Create synthetic elevation data for demonstration
-                elevations = np.linspace(10, 200, 5)
-                wind_profiles = []
-                for elev in elevations:
-                    wind_profiles.append(pred_df['Predicted Wind Speed (m/s)'] * (1 + 0.1*np.log(elev/10)))
+                # Train model on training data
+                X_train = train_df[features]
+                y_train = train_df['Wind Speed (m/s)']
+                model.fit(X_train, y_train)
                 
+                # Make predictions on test set
+                X_test = test_df[features]
+                y_test = test_df['Wind Speed (m/s)']
+                y_pred = model.predict(X_test)
+                
+                # Calculate metrics
+                mae = np.mean(np.abs(y_test - y_pred))
+                rmse = np.sqrt(np.mean((y_test - y_pred)**2))
+                r2 = r2_score(y_test, y_pred)
+                
+                # Show metrics
+                col1, col2, col3 = st.columns(3)
+                col1.metric("MAE", f"{mae:.2f} m/s", help="Mean Absolute Error")
+                col2.metric("RMSE", f"{rmse:.2f} m/s", help="Root Mean Squared Error")
+                col3.metric("R² Score", f"{r2:.2f}", help="Variance explained")
+                
+                # Plot actual vs predicted
                 fig = go.Figure()
-                for i, elev in enumerate(elevations):
-                    fig.add_trace(go.Scatter3d(
-                        x=pred_df['Time'],
-                        y=[elev]*len(pred_df),
-                        z=wind_profiles[i],
-                        name=f'{elev}m elevation',
-                        mode='lines'
-                    ))
-                
+                fig.add_trace(go.Scatter(
+                    x=test_df['Time'],
+                    y=y_test,
+                    name='Actual Wind Speed',
+                    line=dict(color='#1f77b4')
+                ))
+                fig.add_trace(go.Scatter(
+                    x=test_df['Time'],
+                    y=y_pred,
+                    name='Predicted Wind Speed',
+                    line=dict(color='#ff7f0e', dash='dash')
+                ))
                 fig.update_layout(
-                    title="Vertical Wind Profile - Shows predicted wind speeds at different heights",
-                    scene=dict(
-                        xaxis_title='Time',
-                        yaxis_title='Elevation (m)',
-                        zaxis_title='Wind Speed (m/s)'
-                    ),
-                    template="plotly_dark"
+                    title="Validation: Actual vs Predicted Wind Speeds",
+                    xaxis_title="Time",
+                    yaxis_title="Wind Speed (m/s)",
+                    template="plotly_dark",
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02)
                 )
                 st.plotly_chart(fig, use_container_width=True)
                 
-                # Row 4: Direction Prediction and Extreme Events
-                col1, col2 = st.columns(2)
+                # Scatter plot of actual vs predicted
+                fig = px.scatter(
+                    x=y_test,
+                    y=y_pred,
+                    trendline="ols",
+                    labels={'x': 'Actual Wind Speed (m/s)', 'y': 'Predicted Wind Speed (m/s)'},
+                    title="Prediction Accuracy: Ideal predictions would fall on the dashed line",
+                    template="plotly_dark"
+                )
+                fig.add_shape(
+                    type="line",
+                    x0=min(y_test), y0=min(y_test),
+                    x1=max(y_test), y1=max(y_test),
+                    line=dict(color="Red", width=2, dash="dot")
+                )
+                st.plotly_chart(fig, use_container_width=True)
                 
-                with col1:
-                    # Direction Prediction (using persistence model for demo)
-                    st.markdown("#### Wind Direction Forecast")
-                    df['Next Direction'] = df['Wind Direction'].shift(-1).fillna(method='ffill')
-                    fig = px.scatter_polar(df[-24:], r='Wind Speed (m/s)', theta='Wind Direction',
-                                        color='Time', size='Wind Speed (m/s)',
-                                        title="24-hour Direction Forecast - Shows expected wind direction changes",
-                                        template="plotly_dark")
-                    st.plotly_chart(fig, use_container_width=True)
-                
-                with col2:
-                    # Extreme Wind Events
-                    st.markdown("#### Extreme Wind Probability")
-                    threshold = st.slider("Set wind speed threshold (m/s)", 
-                                        min_value=10, max_value=30, value=15)
-                    
-                    # Calculate probability using Weibull distribution
-                    prob = np.exp(-(threshold/A)**k)
-                    fig = go.Figure(go.Indicator(
-                        mode="gauge+number",
-                        value=prob*100,
-                        title=f"Probability of Winds > {threshold} m/s",
-                        gauge={'axis': {'range': [0, 100]},
-                            'steps': [
-                                {'range': [0, 50], 'color': "green"},
-                                {'range': [50, 80], 'color': "orange"},
-                                {'range': [80, 100], 'color': "red"}]
-                            },
-                        domain={'x': [0, 1], 'y': [0, 1]}
-                    ))
-                    fig.update_layout(template="plotly_dark")
-                    st.plotly_chart(fig, use_container_width=True)
                     
 if __name__ == "__main__":
     main()
