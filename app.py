@@ -509,7 +509,7 @@ def main():
                     fig.update_layout(template="plotly_dark")
                     st.plotly_chart(fig, use_container_width=True)
 
-             with tab4:
+            with tab4:
                 st.subheader("🔮 Advanced Wind Speed Prediction")
                 
                 # Prediction explanation expander
