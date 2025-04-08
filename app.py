@@ -621,108 +621,119 @@ def main():
                 # Show prediction data with expander
                 with st.expander("View Detailed Prediction Data"):
                     st.dataframe(pred_df)
-
-                st.subheader("🧠 Model Accuracy Visualization")
                 
-                # Prepare data for accuracy visualization
-                X = df[['hour_sin', 'hour_cos', 'day_of_week', 'day_of_year', 'month',
-                       'Temperature (°C)', 'Humidity (%)', 'Pressure (hPa)',
-                       'wind_speed_lag1', 'wind_speed_lag2', 'wind_speed_lag3']].dropna()
-                y = df['Wind Speed (m/s)'].iloc[X.index]
+                # NEW: Model Evaluation Visualizations
+                st.subheader("📊 Prediction Model Evaluation")
                 
-                # Make predictions on the same data
+                # Get the trained model's predictions on the entire dataset
+                X = df[features]
                 y_pred = model.predict(X)
                 
-                # Create accuracy visualization
-                fig = go.Figure()
-                
-                # Add perfect prediction line
-                fig.add_trace(go.Scatter(
-                    x=[y.min(), y.max()],
-                    y=[y.min(), y.max()],
-                    mode='lines',
-                    line=dict(color='red', dash='dash'),
-                    name='Perfect Prediction'
-                ))
-                
-                # Add actual vs predicted points
-                fig.add_trace(go.Scatter(
-                    x=y,
-                    y=y_pred,
-                    mode='markers',
-                    marker=dict(
-                        size=8,
-                        color=df['Temperature (°C)'].iloc[X.index],
-                        colorscale='Viridis',
-                        showscale=True,
-                        colorbar=dict(title='Temperature (°C)')
-                    ),
-                    name='Predictions',
-                    hovertext=df['Time'].iloc[X.index].dt.strftime('%Y-%m-%d %H:%M')
-                ))
-                
-                fig.update_layout(
-                    title='Actual vs Predicted Wind Speeds',
-                    xaxis_title='Actual Wind Speed (m/s)',
-                    yaxis_title='Predicted Wind Speed (m/s)',
-                    template='plotly_dark',
-                    annotations=[
-                        dict(
-                            x=0.95,
-                            y=0.05,
-                            xref='paper',
-                            yref='paper',
-                            text=f'R² = {test_accuracy:.2f}',
-                            showarrow=False,
-                            font=dict(size=20)
-                        )
-                    ]
-                )
-                
-                st.plotly_chart(fig, use_container_width=True)
-                
-                # Add residual analysis
-                residuals = y - y_pred
+                # Create evaluation dataframe
+                eval_df = pd.DataFrame({
+                    'Time': df['Time'],
+                    'Actual': df['Wind Speed (m/s)'],
+                    'Predicted': y_pred
+                })
                 
                 col1, col2 = st.columns(2)
                 
+                # Visualization 1: Actual vs Predicted Scatter Plot
                 with col1:
-                    fig = px.histogram(
-                        x=residuals,
-                        nbins=30,
-                        title='Prediction Error Distribution',
-                        labels={'x': 'Prediction Error (m/s)'},
-                        template='plotly_dark'
+                    fig = go.Figure()
+                    
+                    # Add perfect prediction line
+                    max_val = max(eval_df['Actual'].max(), eval_df['Predicted'].max())
+                    fig.add_trace(go.Scatter(
+                        x=[0, max_val],
+                        y=[0, max_val],
+                        mode='lines',
+                        line=dict(color='red', dash='dash'),
+                        name='Perfect Prediction'
+                    ))
+                    
+                    # Add actual vs predicted points
+                    fig.add_trace(go.Scatter(
+                        x=eval_df['Actual'],
+                        y=eval_df['Predicted'],
+                        mode='markers',
+                        marker=dict(color='#1f77b4'),
+                        name='Predictions'
+                    ))
+                    
+                    fig.update_layout(
+                        title='Actual vs Predicted Wind Speeds',
+                        xaxis_title='Actual Wind Speed (m/s)',
+                        yaxis_title='Predicted Wind Speed (m/s)',
+                        template="plotly_dark",
+                        showlegend=True,
+                        annotations=[
+                            dict(
+                                x=0.5,
+                                y=0.1,
+                                xref="paper",
+                                yref="paper",
+                                text=f"R² Score: {test_accuracy:.2f}",
+                                showarrow=False,
+                                font=dict(size=14)
+                            )
+                        ]
                     )
-                    fig.add_vline(x=0, line_dash='dash', line_color='red')
                     st.plotly_chart(fig, use_container_width=True)
                 
+                # Visualization 2: Feature Importance
                 with col2:
-                    fig = px.scatter(
-                        x=y_pred,
-                        y=residuals,
-                        title='Residual Analysis',
-                        labels={'x': 'Predicted Value', 'y': 'Residual'},
-                        trendline='lowess',
-                        template='plotly_dark'
-                    )
-                    fig.add_hline(y=0, line_dash='dash', line_color='red')
-                    st.plotly_chart(fig, use_container_width=True)
+                    if hasattr(model, 'feature_importances_'):
+                        importance_df = pd.DataFrame({
+                            'Feature': features,
+                            'Importance': model.feature_importances_
+                        }).sort_values('Importance', ascending=True)
+                        
+                        fig = go.Figure(go.Bar(
+                            x=importance_df['Importance'],
+                            y=importance_df['Feature'],
+                            orientation='h',
+                            marker=dict(color='#ff7f0e')
+                        ))
+                        
+                        fig.update_layout(
+                            title='Feature Importance for Wind Speed Prediction',
+                            xaxis_title='Relative Importance',
+                            yaxis_title='Feature',
+                            template="plotly_dark",
+                            height=500
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+                    else:
+                        st.warning("Feature importance not available for this model type")
                 
-                # Feature importance visualization
-                st.subheader("📊 Feature Importance Analysis")
-                
-                importances = model.feature_importances_
-                indices = np.argsort(importances)[::-1]
-                
-                fig = px.bar(
-                    x=np.array(features)[indices],
-                    y=importances[indices],
-                    title='Relative Feature Importance',
-                    labels={'x': 'Features', 'y': 'Importance Score'},
-                    template='plotly_dark'
+                # Time Series Comparison
+                st.subheader("⏱️ Time Series Comparison")
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(
+                    x=eval_df['Time'],
+                    y=eval_df['Actual'],
+                    name='Actual Wind Speed',
+                    line=dict(color='#1f77b4')
+                ))
+                fig.add_trace(go.Scatter(
+                    x=eval_df['Time'],
+                    y=eval_df['Predicted'],
+                    name='Predicted Wind Speed',
+                    line=dict(color='#ff7f0e', dash='dot')
+                ))
+                fig.update_layout(
+                    title='Actual vs Predicted Wind Speeds Over Time',
+                    xaxis_title='Time',
+                    yaxis_title='Wind Speed (m/s)',
+                    template="plotly_dark",
+                    hovermode="x unified"
                 )
                 st.plotly_chart(fig, use_container_width=True)
+                
+                # Show prediction data with expander
+                with st.expander("View Detailed Prediction Data"):
+                    st.dataframe(pred_df)
                     
 if __name__ == "__main__":
     main()
