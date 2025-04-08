@@ -1,3 +1,46 @@
+Hugging Face's logo
+Hugging Face
+Models
+Datasets
+Spaces
+Posts
+Docs
+Enterprise
+Pricing
+
+
+
+Spaces:
+
+prakashvamsi
+/
+f1
+
+
+like
+0
+
+Logs
+App
+Files
+Community
+Settings
+f1
+prakashvamsi's picture
+prakashvamsi
+Update app.py
+51c8fa7
+verified
+5 minutes ago
+raw
+
+Copy download link
+history
+blame
+edit
+delete
+
+33.8 kB
 import streamlit as st
 import requests
 import pandas as pd
@@ -169,51 +212,50 @@ def predict_future_wind(model, features, last_data_point, future_hours):
 
 # Sidebar with project information
 def show_sidebar_info():
-    if st.sidebar.button("ℹ️ Show Project Details"):
-        st.sidebar.title("About This Project")
-        st.sidebar.markdown("""
-        ### Wind Energy Analytics Dashboard
-        
-        This interactive dashboard provides comprehensive analysis of wind energy potential:
-        
-        1. **Wind Prediction**: Forecast and analyze wind patterns
-        2. **Turbine Selection**: Compare different turbine models
-        3. **Generation Analysis**: Estimate energy production
-        
-        **Data Sources**:
-        - Weather data from Open-Meteo API
-        - Location data from Nominatim
+    st.sidebar.title("About This Project")
+    st.sidebar.markdown("""
+    ### Wind Energy Analytics Dashboard
+    
+    This interactive dashboard provides comprehensive analysis of wind energy potential:
+    
+    1. **Wind Prediction**: Forecast and analyze wind patterns
+    2. **Turbine Selection**: Compare different turbine models
+    3. **Generation Analysis**: Estimate energy production
+    
+    **Data Sources**:
+    - Weather data from Open-Meteo API
+    - Location data from Nominatim
+    """)
+    
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Chart Explanations")
+    
+    with st.sidebar.expander("🌪️ Wind Analysis Charts"):
+        st.markdown("""
+        - **Wind Speed Time Series**: Hourly wind speed forecast
+        - **Wind Direction vs Speed**: Polar plot showing wind patterns
+        - **Wind Speed Distribution**: Frequency of different wind speeds
+        - **Weibull Distribution**: Statistical model of wind speed probability
+        - **Wind Speed vs Temperature**: Relationship with weather factors
+        - **Wind Speed Heatmap**: Time vs speed density visualization
+        - **Wind Rose**: Directional distribution of wind speeds
         """)
-        
-        st.sidebar.markdown("---")
-        st.sidebar.subheader("Chart Explanations")
-        
-        with st.sidebar.expander("🌪️ Wind Analysis Charts"):
-            st.markdown("""
-            - **Wind Speed Time Series**: Hourly wind speed forecast
-            - **Wind Direction vs Speed**: Polar plot showing wind patterns
-            - **Wind Speed Distribution**: Frequency of different wind speeds
-            - **Weibull Distribution**: Statistical model of wind speed probability
-            - **Wind Speed vs Temperature**: Relationship with weather factors
-            - **Wind Speed Heatmap**: Time vs speed density visualization
-            - **Wind Rose**: Directional distribution of wind speeds
-            """)
-        
-        with st.sidebar.expander("🌀 Turbine Performance Charts"):
-            st.markdown("""
-            - **Power Output**: Hourly generation forecast
-            - **Power Curve**: Turbine performance at different wind speeds
-            - **Power vs Wind Speed**: Relationship colored by air density
-            - **Diurnal Pattern**: Daily variation in power generation
-            """)
-        
-        with st.sidebar.expander("⚡ Energy Forecast Charts"):
-            st.markdown("""
-            - **Cumulative Energy**: Total production over time
-            - **Daily Energy Distribution**: Box plots by day of week
-            - **Energy vs Wind Speed**: Correlation analysis
-            - **Capacity Factor**: Utilization percentage gauge
-            """)
+    
+    with st.sidebar.expander("🌀 Turbine Performance Charts"):
+        st.markdown("""
+        - **Power Output**: Hourly generation forecast
+        - **Power Curve**: Turbine performance at different wind speeds
+        - **Power vs Wind Speed**: Relationship colored by air density
+        - **Diurnal Pattern**: Daily variation in power generation
+        """)
+    
+    with st.sidebar.expander("⚡ Energy Forecast Charts"):
+        st.markdown("""
+        - **Cumulative Energy**: Total production over time
+        - **Daily Energy Distribution**: Box plots by day of week
+        - **Energy vs Wind Speed**: Correlation analysis
+        - **Capacity Factor**: Utilization percentage gauge
+        """)
 
 # UI Components
 def main():
@@ -510,10 +552,11 @@ def main():
                     fig.update_layout(template="plotly_dark")
                     st.plotly_chart(fig, use_container_width=True)
 
+
             with tab4:
                 st.subheader("🔮 Advanced Wind Speed Prediction")
-                
-                # Add the new expander section at the beginning
+
+
                 with st.expander("📚 About Wind Speed Prediction Model", expanded=False):
                     st.markdown(f"""
                     ### Wind Speed Prediction Methodology
@@ -545,8 +588,8 @@ def main():
                     3. Model is trained on 80% of available data
                     4. Tested on remaining 20% for validation
                     """)
-
-                # The rest remains EXACTLY as in your original Tab 4 code
+                
+                # Enhanced model description
                 st.markdown("""
                 **Prediction Methodology:**
                 - Uses Random Forest Regressor with 200 trees
@@ -622,5 +665,112 @@ def main():
                 with st.expander("View Detailed Prediction Data"):
                     st.dataframe(pred_df)
 
+
+                st.subheader("🧠 Model Accuracy Visualization")
+                
+                # Create train-test split for visualization
+                X = df[['hour_sin', 'hour_cos', 'day_of_week', 'day_of_year', 'month',
+                       'Temperature (°C)', 'Humidity (%)', 'Pressure (hPa)',
+                       'wind_speed_lag1', 'wind_speed_lag2', 'wind_speed_lag3']].dropna()
+                y = df['Wind Speed (m/s)'].iloc[X.index]
+                
+                # Make predictions on test set
+                y_pred = model.predict(X)
+                
+                # Create accuracy visualization
+                fig = go.Figure()
+                
+                # Add perfect prediction line
+                fig.add_trace(go.Scatter(
+                    x=[y.min(), y.max()],
+                    y=[y.min(), y.max()],
+                    mode='lines',
+                    line=dict(color='red', dash='dash'),
+                    name='Perfect Prediction'
+                ))
+                
+                # Add actual vs predicted points
+                fig.add_trace(go.Scatter(
+                    x=y,
+                    y=y_pred,
+                    mode='markers',
+                    marker=dict(
+                        size=8,
+                        color=df['Temperature (°C)'].iloc[X.index],
+                        colorscale='Viridis',
+                        showscale=True,
+                        colorbar=dict(title='Temperature (°C)')
+                    ),
+                    name='Predictions',
+                    hovertext=df['Time'].iloc[X.index].dt.strftime('%Y-%m-%d %H:%M')
+                ))
+                
+                fig.update_layout(
+                    title='Actual vs Predicted Wind Speeds',
+                    xaxis_title='Actual Wind Speed (m/s)',
+                    yaxis_title='Predicted Wind Speed (m/s)',
+                    template='plotly_dark',
+                    annotations=[
+                        dict(
+                            x=0.95,
+                            y=0.05,
+                            xref='paper',
+                            yref='paper',
+                            text=f'R² = {test_accuracy:.2f}',
+                            showarrow=False,
+                            font=dict(size=20)
+                    ]
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Add residual analysis
+                residuals = y - y_pred
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    fig = px.histogram(
+                        x=residuals,
+                        nbins=30,
+                        title='Prediction Error Distribution',
+                        labels={'x': 'Prediction Error (m/s)'},
+                        template='plotly_dark'
+                    )
+                    fig.add_vline(x=0, line_dash='dash', line_color='red')
+                    st.plotly_chart(fig, use_container_width=True)
+                
+                with col2:
+                    fig = px.scatter(
+                        x=y_pred,
+                        y=residuals,
+                        title='Residual Analysis',
+                        labels={'x': 'Predicted Value', 'y': 'Residual'},
+                        trendline='lowess',
+                        template='plotly_dark'
+                    )
+                    fig.add_hline(y=0, line_dash='dash', line_color='red')
+                    st.plotly_chart(fig, use_container_width=True)
+                
+                # Feature importance visualization
+                st.subheader("📊 Feature Importance Analysis")
+                
+                importances = model.feature_importances_
+                indices = np.argsort(importances)[::-1]
+                
+                fig = px.bar(
+                    x=np.array(features)[indices],
+                    y=importances[indices],
+                    title='Relative Feature Importance',
+                    labels={'x': 'Features', 'y': 'Importance Score'},
+                    template='plotly_dark'
+                )
+                st.plotly_chart(fig, use_container_width=True)
+                    
 if __name__ == "__main__":
     main()
+
+
+
+
+
