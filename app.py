@@ -509,7 +509,7 @@ def main():
                     fig.update_layout(template="plotly_dark")
                     st.plotly_chart(fig, use_container_width=True)
 
-            with tab4:
+             with tab4:
                 st.subheader("🔮 Advanced Wind Speed Prediction")
                 
                 # Prediction explanation expander
@@ -548,7 +548,7 @@ def main():
                 <div class="metric-card">
                     <h4>Model Performance</h4>
                     <p>R² Score: <strong>{test_accuracy:.2%}</strong></p>
-                    <p>Mean Absolute Error: <strong>{np.mean(np.abs(model.predict(X_test) - y_test):.2f} m/s</strong></p>
+                    <p>Mean Absolute Error: <strong>{np.mean(np.abs(model.predict(X_test) - y_test)):.2f} m/s</strong></p>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -669,7 +669,6 @@ def main():
                         
                     except Exception as e:
                         st.error(f"Error processing uploaded file: {str(e)}")
-
                     
 if __name__ == "__main__":
     main()
