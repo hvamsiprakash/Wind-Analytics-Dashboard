@@ -804,7 +804,7 @@ def main():
                     fig.update_traces(
                         marker=dict(size=8, opacity=0.7, line=dict(width=1, color='DarkSlateGrey'))
                     st.plotly_chart(fig, use_container_width=True)
-                
+
                 # Error distribution analysis
                 st.subheader("📉 Prediction Error Analysis")
                 test_df['Prediction Error'] = test_df['Predicted Wind Speed (m/s)'] - test_df['Actual Wind Speed (m/s)']
