@@ -1,7 +1,5 @@
 # 🌬️ Wind Energy Analytics Dashboard
 
-[![Python](https://img.shields.io/badge
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.0%2B-orange.svg[![License](https://img.shields.io/badge[![Live Demo](https://img.shields.io/badge/Demo-Live%20App-4CAF50.svg(https://wind-analytics-dashboard-3dv5dfpquv6xawtmbnwf8q.stream Streamlit dashboard for wind energy analytics: **location-based wind forecasting, turbine analysis, and energy generation estimation**.  
   
 🔗 **Live App:** [Wind Energy Analytics Dashboard](https://wind-analytics-dashboard-3dv5dfpquv6xawtmbnwf8q.streamlit.app/)
 
@@ -18,11 +16,7 @@
 
 ***
 
-## 📷 Screenshots
 
-| Dashboard Main Page | Energy Forecast Tab | Model Performance Report |
-|:-------------------:|:------------------:|:-----------------------:|
-| ![Main](assets/screenshot_main.pngassets/screenshot_energy.pngassets/screenshot_performance
 
 ## 🧰 Tech Stack
 
@@ -102,22 +96,4 @@ Try it here:
 
 ***
 
-## 👨‍💻 Author
 
-**Developer:** [Your Name]  
-**Contact:** your.email@example.com  
-**License:** MIT
-
-***
-
-## 📄 License
-
-This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
-
-***
-
-> **Feel free to open issues or pull requests for suggestions or improvements!**
-
-***
-
-You can copy-paste this markdown directly into your GitHub `README.md` file.
